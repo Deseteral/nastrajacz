@@ -1,0 +1,5 @@
+#!/bin/bash
+BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_PATH="$BIN_DIR/../src/nastrajacz.py"
+
+python3 "$SCRIPT_PATH" "$@"
