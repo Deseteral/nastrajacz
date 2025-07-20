@@ -15,7 +15,7 @@ targets = [
 ]
 ```
 
-For more real-life example checkout my [dotfiles](https://github.com/Deseteral/dotfiles).
+For more real-life example check out my [dotfiles](https://github.com/Deseteral/dotfiles).
 
 ## 📜 License
 
