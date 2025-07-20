@@ -15,7 +15,8 @@ HELP_LIST = 'list fragments present in configuration file'
 def main():
     args = parse_args()
 
-    data = read_fragments_config()
+    cwd = os.getcwd()
+    data = read_fragments_config(cwd)
     if data is None:
         return
 
@@ -101,9 +102,15 @@ def list_fragments(data: dict[str, Any]) -> None:
     print(fragments)
 
 
-def read_fragments_config() -> dict[str, Any] | None:
+def read_fragments_config(working_dir_path: str) -> dict[str, Any] | None:
+    fragments_path = os.path.join(working_dir_path, 'fragments.toml')
+
+    if not os.path.isfile(fragments_path):
+        print('There is no fragments file at this location.')
+        return None
+
     try:
-        f = open('./fragments.toml', mode='rb')
+        f = open(fragments_path, mode='rb')
         data = tomllib.load(f)
         f.close()
         return data
