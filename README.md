@@ -17,6 +17,12 @@ targets = [
 
 For more real-life example check out my [dotfiles](https://github.com/Deseteral/dotfiles).
 
+For program documentation run:
+
+```bash
+nastrajacz --help
+```
+
 ## 📜 License
 
 This project is licensed under the [MIT license](LICENSE).
