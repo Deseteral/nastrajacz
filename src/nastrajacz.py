@@ -57,7 +57,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def fetch_fragments(data: dict[str, Any], fragments: set[str]) -> None:
-    print(f'Performing fetch for {', '.join(fragments)} fragments.')
+    print(f'Performing fetch for {", ".join(fragments)} fragments.')
 
     mkdir('./fragments')
 
@@ -79,7 +79,7 @@ def fetch_fragments(data: dict[str, Any], fragments: set[str]) -> None:
 
 
 def apply_fragments(data: dict[str, Any], fragments: set[str]) -> None:
-    print(f'Performing apply for {', '.join(fragments)} fragments.')
+    print(f'Performing apply for {", ".join(fragments)} fragments.')
 
     for fragment in fragments:
         for target in data[fragment]['targets']:
