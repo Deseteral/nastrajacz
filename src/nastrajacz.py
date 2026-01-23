@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 
+import argparse
 import os
 import shutil
 import tomllib
-import argparse
 from typing import Any
 
-HELP_APPLY = 'apply configuration stored in the repository'
-HELP_FETCH = 'fetch actual configuration and store it in the repository'
-HELP_SELECT = 'comma separated list of fragments to operate on, or all fragments when omited'
-HELP_LIST = 'list fragments present in configuration file'
+HELP_APPLY = "apply configuration stored in the repository"
+HELP_FETCH = "fetch actual configuration and store it in the repository"
+HELP_SELECT = (
+    "comma separated list of fragments to operate on, or all fragments when omited"
+)
+HELP_LIST = "list fragments present in configuration file"
 
 
 def main():
@@ -26,7 +28,7 @@ def main():
         fragments = config_fragments & args.select
 
     if len(fragments) == 0:
-        print('Cannot perform operations without selected fragments.')
+        print("Cannot perform operations without selected fragments.")
         return
 
     if args.fetch:
@@ -41,35 +43,35 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--apply', help=HELP_APPLY, action='store_true')
-    group.add_argument('--fetch', help=HELP_FETCH, action='store_true')
-    group.add_argument('--list', help=HELP_LIST, action='store_true')
+    group.add_argument("--apply", help=HELP_APPLY, action="store_true")
+    group.add_argument("--fetch", help=HELP_FETCH, action="store_true")
+    group.add_argument("--list", help=HELP_LIST, action="store_true")
     group.required = True
 
-    parser.add_argument('--select', help=HELP_SELECT, type=str)
+    parser.add_argument("--select", help=HELP_SELECT, type=str)
 
     args = parser.parse_args()
 
     if args.select is not None:
-        args.select = set([s.strip() for s in args.select.split(',')])
+        args.select = set([s.strip() for s in args.select.split(",")])
 
     return args
 
 
 def fetch_fragments(data: dict[str, Any], fragments: set[str]) -> None:
     sorted_fragments = sorted(fragments)
-    print(f'Performing fetch for {", ".join(sorted_fragments)} fragments.')
+    print(f"Performing fetch for {', '.join(sorted_fragments)} fragments.")
 
-    mkdir('./fragments')
+    mkdir("./fragments")
 
     for fragment in sorted_fragments:
-        for target in data[fragment]['targets']:
-            src = os.path.expanduser(target['src'])
+        for target in data[fragment]["targets"]:
+            src = os.path.expanduser(target["src"])
             basename = os.path.basename(src)
-            target_dir = os.path.join('.', 'fragments', fragment)
+            target_dir = os.path.join(".", "fragments", fragment)
 
-            if 'dir' in target:
-                subdir = os.path.expanduser(target['dir'])
+            if "dir" in target:
+                subdir = os.path.expanduser(target["dir"])
                 target_dir = os.path.join(target_dir, subdir)
 
             if os.path.isdir(src):
@@ -81,15 +83,15 @@ def fetch_fragments(data: dict[str, Any], fragments: set[str]) -> None:
 
 def apply_fragments(data: dict[str, Any], fragments: set[str]) -> None:
     sorted_fragments = sorted(fragments)
-    print(f'Performing apply for {", ".join(sorted_fragments)} fragments.')
+    print(f"Performing apply for {', '.join(sorted_fragments)} fragments.")
 
     for fragment in sorted_fragments:
-        for target in data[fragment]['targets']:
-            src = os.path.expanduser(target['src'])
-            target_dir = os.path.join('.', 'fragments', fragment)
+        for target in data[fragment]["targets"]:
+            src = os.path.expanduser(target["src"])
+            target_dir = os.path.join(".", "fragments", fragment)
 
-            if 'dir' in target:
-                subdir = os.path.expanduser(target['dir'])
+            if "dir" in target:
+                subdir = os.path.expanduser(target["dir"])
                 target_dir = os.path.join(target_dir, subdir)
 
             basename = os.path.basename(src)
@@ -99,25 +101,25 @@ def apply_fragments(data: dict[str, Any], fragments: set[str]) -> None:
 
 
 def list_fragments(data: dict[str, Any]) -> None:
-    fragments = ', '.join(data.keys())
-    print('Fragments defined in configuration file:')
+    fragments = ", ".join(data.keys())
+    print("Fragments defined in configuration file:")
     print(fragments)
 
 
 def read_fragments_config(working_dir_path: str) -> dict[str, Any] | None:
-    fragments_path = os.path.join(working_dir_path, 'fragments.toml')
+    fragments_path = os.path.join(working_dir_path, "fragments.toml")
 
     if not os.path.isfile(fragments_path):
-        print('There is no fragments file at this location.')
+        print("There is no fragments file at this location.")
         return None
 
     try:
-        f = open(fragments_path, mode='rb')
+        f = open(fragments_path, mode="rb")
         data = tomllib.load(f)
         f.close()
         return data
     except Exception:
-        print('Could not read fragments config file.')
+        print("Could not read fragments config file.")
         return None
 
 
@@ -127,16 +129,16 @@ def mkdir(dir_path: str) -> None:
 
 
 def copy(src: str, dst: str) -> None:
-    print(f'Copying "{src}" to "{dst}"...', end='')
+    print(f'Copying "{src}" to "{dst}"...', end="")
     if os.path.isdir(src):
         shutil.copytree(src, dst, dirs_exist_ok=True)
-        print('  Done.')
+        print("  Done.")
     elif os.path.isfile(src):
         shutil.copy2(src, dst)
-        print('  Done.')
+        print("  Done.")
     else:
-        print('  Skipped...')
+        print("  Skipped...")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
