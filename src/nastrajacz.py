@@ -23,18 +23,18 @@ def main():
         return
 
     config_fragments = set(data.keys())
-    fragments = config_fragments
+    selected_fragments = config_fragments
     if args.select is not None:
-        fragments = config_fragments & args.select
+        selected_fragments = config_fragments & args.select
 
-    if len(fragments) == 0:
+    if len(selected_fragments) == 0:
         print("Cannot perform operations without selected fragments.")
         return
 
     if args.fetch:
-        fetch_fragments(data, fragments)
+        fetch_fragments(data, selected_fragments)
     elif args.apply:
-        apply_fragments(data, fragments)
+        apply_fragments(data, selected_fragments)
     elif args.list:
         list_fragments(data)
 
@@ -58,49 +58,50 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def fetch_fragments(data: dict[str, Any], fragments: set[str]) -> None:
-    sorted_fragments = sorted(fragments)
+def fetch_fragments(data: dict[str, Any], selected_fragments: set[str]) -> None:
+    sorted_fragments = sorted(selected_fragments)
     print(f"Performing fetch for {', '.join(sorted_fragments)} fragments.")
 
     mkdir("./fragments")
 
     for fragment in sorted_fragments:
         for target in data[fragment]["targets"]:
-            src = os.path.expanduser(target["src"])
-            basename = os.path.basename(src)
-            target_dir = os.path.join(".", "fragments", fragment)
+            src_path = os.path.expanduser(target["src"])
+            src_basename = os.path.basename(src_path)
+            fragment_path = os.path.join(".", "fragments", fragment)
 
             if "dir" in target:
                 subdir = os.path.expanduser(target["dir"])
-                target_dir = os.path.join(target_dir, subdir)
+                fragment_path = os.path.join(fragment_path, subdir)
 
-            if os.path.isdir(src):
-                target_dir = os.path.join(target_dir, basename)
+            if os.path.isdir(src_path):
+                fragment_path = os.path.join(fragment_path, src_basename)
 
-            mkdir(target_dir)
-            copy(src, target_dir)
+            mkdir(fragment_path)
+            copy(src_path, fragment_path)
 
 
-def apply_fragments(data: dict[str, Any], fragments: set[str]) -> None:
-    sorted_fragments = sorted(fragments)
+def apply_fragments(data: dict[str, Any], selected_fragments: set[str]) -> None:
+    sorted_fragments = sorted(selected_fragments)
     print(f"Performing apply for {', '.join(sorted_fragments)} fragments.")
 
     for fragment in sorted_fragments:
         for target in data[fragment]["targets"]:
-            src = os.path.expanduser(target["src"])
-            fragment_dir = os.path.join(".", "fragments", fragment)
+            src_path = os.path.expanduser(target["src"])
+            src_basename = os.path.basename(src_path)
+            fragment_path = os.path.join(".", "fragments", fragment)
 
             if "dir" in target:
                 subdir = os.path.expanduser(target["dir"])
-                fragment_dir = os.path.join(fragment_dir, subdir)
+                fragment_path = os.path.join(fragment_path, subdir)
 
-            basename = os.path.basename(src)
-            target_path = os.path.join(fragment_dir, basename)
+            target_path = os.path.join(fragment_path, src_basename)
 
-            parent_dir = os.path.dirname(src)
-            if parent_dir:
-                mkdir(parent_dir)
-            copy(target_path, src)
+            src_parent_dir = os.path.dirname(src_path)
+            if src_parent_dir:
+                mkdir(src_parent_dir)
+
+            copy(target_path, src_path)
 
 
 def list_fragments(data: dict[str, Any]) -> None:
