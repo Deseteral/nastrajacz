@@ -88,16 +88,19 @@ def apply_fragments(data: dict[str, Any], fragments: set[str]) -> None:
     for fragment in sorted_fragments:
         for target in data[fragment]["targets"]:
             src = os.path.expanduser(target["src"])
-            target_dir = os.path.join(".", "fragments", fragment)
+            fragment_dir = os.path.join(".", "fragments", fragment)
 
             if "dir" in target:
                 subdir = os.path.expanduser(target["dir"])
-                target_dir = os.path.join(target_dir, subdir)
+                fragment_dir = os.path.join(fragment_dir, subdir)
 
             basename = os.path.basename(src)
-            target_dir = os.path.join(target_dir, basename)
+            target_path = os.path.join(fragment_dir, basename)
 
-            copy(target_dir, src)
+            parent_dir = os.path.dirname(src)
+            if parent_dir:
+                mkdir(parent_dir)
+            copy(target_path, src)
 
 
 def list_fragments(data: dict[str, Any]) -> None:
