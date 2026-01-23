@@ -141,7 +141,7 @@ your-config-repo/
 
 ## Development
 
-This project is managed by `uv`. For more information refer to [`uv' documentation](https://docs.astral.sh/uv/).
+This project is managed by `uv`. For more information refer to [`uv` documentation](https://docs.astral.sh/uv/).
 
 To run tests execute:
 
