@@ -305,3 +305,41 @@ Copying "./fragments/test_fragment_3/.config3" to "{home}/.config3"...  Done.
 '''
         == output
     )
+
+
+def test_apply_creates_missing_parent_directories(tmp_path, monkeypatch, capsys):
+    """--apply creates parent directories when they don't exist."""
+
+    # Given
+    home = tmp_path / "home"
+    home.mkdir()
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    fragments_dir = repo / "fragments" / "test_fragment_1" / "testapp"
+    fragments_dir.mkdir(parents=True)
+    (fragments_dir / "settings.json").write_text('{"applied": true}')
+
+    (repo / "fragments.toml").write_text(f'''
+[test_fragment_1]
+targets = [{{ src = "{home}/.config/testapp" }}]
+''')
+
+    monkeypatch.chdir(repo)
+    monkeypatch.setattr(sys, "argv", ["nastrajacz", "--apply"])
+
+    # When
+    main()
+    output = capsys.readouterr().out
+
+    # Then
+    applied_dir = home / ".config" / "testapp"
+    assert applied_dir.is_dir()
+    assert (applied_dir / "settings.json").read_text() == '{"applied": true}'
+
+    assert (
+        f'''Performing apply for test_fragment_1 fragments.
+Copying "./fragments/test_fragment_1/testapp" to "{home}/.config/testapp"...  Done.
+'''
+        == output
+    )
