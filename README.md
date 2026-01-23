@@ -139,6 +139,16 @@ your-config-repo/
 4. Commit and push to version control.
 5. On a new machine, clone your repository and run `nastrajacz --apply`.
 
+## Development
+
+This project is managed by `uv`. For more information refer to [`uv' documentation](https://docs.astral.sh/uv/).
+
+To run tests execute:
+
+```sh
+uv run pytest -s tests/ -v
+```
+
 ## License
 
 This project is licensed under the [MIT license](LICENSE).
