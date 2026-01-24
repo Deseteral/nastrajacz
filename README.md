@@ -65,6 +65,34 @@ This stores files under `fragments/nvim/config/` and `fragments/nvim/local/` res
 | `src`  | Yes      | Path to the file or directory on your system. Supports `~` expansion. |
 | `dir`  | No       | Subdirectory within the fragment to store the target.                 |
 
+### Fragment actions
+
+You can define shell commands to run before and after applying a fragment using the `actions` section:
+
+```toml
+[nvim]
+targets = [
+    { src = "~/.config/nvim" },
+]
+
+[nvim.actions]
+before_apply = "echo 'Backing up existing config...'"
+after_apply = "nvim --headless +PlugInstall +qall"
+```
+
+#### Action options
+
+| Option         | Description                                                                       |
+| -------------- | --------------------------------------------------------------------------------- |
+| `before_apply` | Shell command to run before copying files. If it fails, the fragment is skipped.  |
+| `after_apply`  | Shell command to run after copying files. If it fails, only a warning is printed. |
+
+**Behavior:**
+
+- Actions run in the fragment's directory (`./fragments/<fragment_name>/`).
+- If `before_apply` exits with a non-zero status, the fragment is skipped entirely (no files are copied, and `after_apply` does not run).
+- If `after_apply` exits with a non-zero status, a warning is printed but other fragments continue processing.
+
 ## Usage
 
 All commands must be run from the directory containing `fragments.toml`.
