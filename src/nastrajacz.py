@@ -20,11 +20,20 @@ class Target:
     src: str
     dir: str | None
 
+    def src_path(self) -> str:
+        return os.path.expanduser(self.src)
+
+    def src_basename(self) -> str:
+        return os.path.basename(self.src_path())
+
 
 @dataclass
 class Fragment:
     name: str
     targets: list[Target]
+
+    def path(self) -> str:
+        return os.path.join(".", "fragments", self.name)
 
 
 @dataclass
@@ -95,19 +104,17 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
 
     for fragment in fragments.as_list():
         for target in fragment.targets:
-            src_path = os.path.expanduser(target.src)
-            src_basename = os.path.basename(src_path)
-            fragment_path = os.path.join(".", "fragments", fragment.name)
+            target_path = fragment.path()
 
             if target.dir is not None:
                 subdir = os.path.expanduser(target.dir)
-                fragment_path = os.path.join(fragment_path, subdir)
+                target_path = os.path.join(target_path, subdir)
 
-            if os.path.isdir(src_path):
-                fragment_path = os.path.join(fragment_path, src_basename)
+            if os.path.isdir(target.src_path()):
+                target_path = os.path.join(target_path, target.src_basename())
 
-            mkdir(fragment_path)
-            copy(src_path, fragment_path)
+            mkdir(target_path)
+            copy(target.src_path(), target_path)
 
 
 def apply_fragments(fragments: FragmentsConfig) -> None:
@@ -115,21 +122,19 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
     for fragment in fragments.as_list():
         for target in fragment.targets:
-            src_path = os.path.expanduser(target.src)
-            src_basename = os.path.basename(src_path)
-            fragment_path = os.path.join(".", "fragments", fragment.name)
+            fragment_path = fragment.path()
 
             if target.dir is not None:
                 subdir = os.path.expanduser(target.dir)
                 fragment_path = os.path.join(fragment_path, subdir)
 
-            target_path = os.path.join(fragment_path, src_basename)
+            target_path = os.path.join(fragment_path, target.src_basename())
 
-            src_parent_dir = os.path.dirname(src_path)
+            src_parent_dir = os.path.dirname(target.src_path())
             if src_parent_dir:
                 mkdir(src_parent_dir)
 
-            copy(target_path, src_path)
+            copy(target_path, target.src_path())
 
 
 def list_fragments(fragments_config: FragmentsConfig) -> None:
