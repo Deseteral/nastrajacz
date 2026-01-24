@@ -3,6 +3,7 @@
 import argparse
 import os
 import shutil
+import subprocess
 import tomllib
 from dataclasses import dataclass
 
@@ -142,6 +143,14 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
             copy(target_path, target.src_path())
 
+        if fragment.actions is not None and fragment.actions.after_apply is not None:
+            run_action(
+                fragment.name,
+                "after_apply",
+                fragment.actions.after_apply,
+                fragment.path(),
+            )
+
 
 def list_fragments(fragments_config: FragmentsConfig) -> None:
     fragments = ", ".join(sorted(fragments_config.names()))
@@ -177,10 +186,10 @@ def read_fragments_config(working_dir_path: str) -> FragmentsConfig | None:
                 after_apply = None
 
                 if "before_apply" in data[name]["actions"]:
-                    before_apply = data[name]["actions"]["before_apply"]
+                    before_apply = data[name]["actions"]["before_apply"] or None
 
                 if "after_apply" in data[name]["actions"]:
-                    after_apply = data[name]["actions"]["after_apply"]
+                    after_apply = data[name]["actions"]["after_apply"] or None
 
                 actions = FragmentActions(
                     before_apply=before_apply, after_apply=after_apply
@@ -211,6 +220,17 @@ def copy(src: str, dst: str) -> None:
         print("  Done.")
     else:
         print("  Skipped...")
+
+
+def run_action(fragment_name: str, action_name: str, command: str, cwd: str) -> bool:
+    print(f"Running {action_name} for {fragment_name}...")
+    result = subprocess.run(command, shell=True, cwd=cwd)
+    success = result.returncode == 0
+    if not success:
+        print(
+            f"Warning: {action_name} for {fragment_name} failed with exit code {result.returncode}."
+        )
+    return success
 
 
 if __name__ == "__main__":
