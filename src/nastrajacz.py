@@ -27,7 +27,7 @@ class Target:
 
 
 @dataclass
-class FragmentScripts:
+class FragmentActions:
     before_apply: str | None
     after_apply: str | None
 
@@ -36,7 +36,7 @@ class FragmentScripts:
 class Fragment:
     name: str
     targets: list[Target]
-    scripts: FragmentScripts | None
+    actions: FragmentActions | None
 
     def path(self) -> str:
         return os.path.join(".", "fragments", self.name)
@@ -171,22 +171,22 @@ def read_fragments_config(working_dir_path: str) -> FragmentsConfig | None:
 
                 targets.append(Target(src=target["src"], dir=dir))
 
-            scripts = None
-            if "scripts" in data[name]:
+            actions = None
+            if "actions" in data[name]:
                 before_apply = None
                 after_apply = None
 
-                if "before_apply" in data[name]["scripts"]:
-                    before_apply = data[name]["scripts"]["before_apply"]
+                if "before_apply" in data[name]["actions"]:
+                    before_apply = data[name]["actions"]["before_apply"]
 
-                if "after_apply" in data[name]["scripts"]:
-                    after_apply = data[name]["scripts"]["after_apply"]
+                if "after_apply" in data[name]["actions"]:
+                    after_apply = data[name]["actions"]["after_apply"]
 
-                scripts = FragmentScripts(
+                actions = FragmentActions(
                     before_apply=before_apply, after_apply=after_apply
                 )
 
-            fragment = Fragment(name=name, targets=targets, scripts=scripts)
+            fragment = Fragment(name=name, targets=targets, actions=actions)
             fragments[name] = fragment
 
         f.close()
