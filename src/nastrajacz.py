@@ -5,7 +5,6 @@ import os
 import shutil
 import tomllib
 from dataclasses import dataclass
-from typing import Any
 
 HELP_APPLY = "apply configuration stored in the repository"
 HELP_FETCH = "fetch actual configuration and store it in the repository"
@@ -28,9 +27,16 @@ class Target:
 
 
 @dataclass
+class FragmentScripts:
+    before_apply: str | None
+    after_apply: str | None
+
+
+@dataclass
 class Fragment:
     name: str
     targets: list[Target]
+    scripts: FragmentScripts | None
 
     def path(self) -> str:
         return os.path.join(".", "fragments", self.name)
@@ -165,7 +171,22 @@ def read_fragments_config(working_dir_path: str) -> FragmentsConfig | None:
 
                 targets.append(Target(src=target["src"], dir=dir))
 
-            fragment = Fragment(name=name, targets=targets)
+            scripts = None
+            if "scripts" in data[name]:
+                before_apply = None
+                after_apply = None
+
+                if "before_apply" in data[name]["scripts"]:
+                    before_apply = data[name]["scripts"]["before_apply"]
+
+                if "after_apply" in data[name]["scripts"]:
+                    after_apply = data[name]["scripts"]["after_apply"]
+
+                scripts = FragmentScripts(
+                    before_apply=before_apply, after_apply=after_apply
+                )
+
+            fragment = Fragment(name=name, targets=targets, scripts=scripts)
             fragments[name] = fragment
 
         f.close()
