@@ -16,9 +16,18 @@ HELP_LIST = "list fragments present in configuration file"
 
 
 @dataclass
+class TargetActions:
+    before_apply: str | None = None
+    after_apply: str | None = None
+    before_fetch: str | None = None
+    after_fetch: str | None = None
+
+
+@dataclass
 class Target:
     src: str
     dir: str | None
+    actions: TargetActions
 
     def src_path(self) -> str:
         return os.path.expanduser(self.src)
@@ -211,24 +220,41 @@ def read_fragments_config(working_dir_path: str) -> FragmentsConfig | None:
             targets = []
             for target in data[name]["targets"]:
                 dir = None
+                actions = TargetActions()
+
                 if "dir" in target:
                     dir = target["dir"]
 
-                targets.append(Target(src=target["src"], dir=dir))
+                if "actions" in target:
+                    target_actions = target["actions"]
+                    if "before_apply" in target_actions:
+                        actions.before_apply = target_actions["before_apply"] or None
+
+                    if "after_apply" in target_actions:
+                        actions.after_apply = target_actions["after_apply"] or None
+
+                    if "before_fetch" in target_actions:
+                        actions.before_fetch = target_actions["before_fetch"] or None
+
+                    if "after_fetch" in target_actions:
+                        actions.after_fetch = target_actions["after_fetch"] or None
+
+                targets.append(Target(src=target["src"], dir=dir, actions=actions))
 
             actions = FragmentActions()
             if "actions" in data[name]:
-                if "before_apply" in data[name]["actions"]:
-                    actions.before_apply = data[name]["actions"]["before_apply"] or None
+                data_actions = data[name]["actions"]
+                if "before_apply" in data_actions:
+                    actions.before_apply = data_actions["before_apply"] or None
 
-                if "after_apply" in data[name]["actions"]:
-                    actions.after_apply = data[name]["actions"]["after_apply"] or None
+                if "after_apply" in data_actions:
+                    actions.after_apply = data_actions["after_apply"] or None
 
-                if "before_fetch" in data[name]["actions"]:
-                    actions.before_fetch = data[name]["actions"]["before_fetch"] or None
+                if "before_fetch" in data_actions:
+                    actions.before_fetch = data_actions["before_fetch"] or None
 
-                if "after_fetch" in data[name]["actions"]:
-                    actions.after_fetch = data[name]["actions"]["after_fetch"] or None
+                if "after_fetch" in data_actions:
+                    actions.after_fetch = data_actions["after_fetch"] or None
 
             fragment = Fragment(name=name, targets=targets, actions=actions)
             fragments[name] = fragment
