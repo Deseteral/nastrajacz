@@ -70,26 +70,26 @@ This stores files under `fragments/nvim/config/` and `fragments/nvim/local/` res
 You can define shell commands to run before and after applying or fetching a fragment using the `actions` section:
 
 ```toml
-[nvim]
+[some_service]
 targets = [
-    { src = "~/.config/nvim" },
+    { src = "~/.config/some_service" },
 ]
 
-[nvim.actions]
-before_apply = "echo 'Backing up existing config...'"
-after_apply = "nvim --headless +PlugInstall +qall"
+[some_service.actions]
 before_fetch = "docker compose stop"
 after_fetch = "docker compose start"
+before_apply = "some_service --will-update"
+after_apply = "some_service --install-updates"
 ```
 
 #### Action options
 
 | Option         | Description                                                                  |
 | -------------- | ---------------------------------------------------------------------------- |
-| `before_apply` | Shell command to run before applying. If it fails, the fragment is skipped.  |
-| `after_apply`  | Shell command to run after applying. If it fails, only a warning is printed. |
 | `before_fetch` | Shell command to run before fetching. If it fails, the fragment is skipped.  |
 | `after_fetch`  | Shell command to run after fetching. If it fails, only a warning is printed. |
+| `before_apply` | Shell command to run before applying. If it fails, the fragment is skipped.  |
+| `after_apply`  | Shell command to run after applying. If it fails, only a warning is printed. |
 
 **Behavior:**
 
