@@ -4,6 +4,7 @@ import argparse
 import os
 import shutil
 import tomllib
+from dataclasses import dataclass
 from typing import Any
 
 HELP_APPLY = "apply configuration stored in the repository"
@@ -14,29 +15,58 @@ HELP_SELECT = (
 HELP_LIST = "list fragments present in configuration file"
 
 
+@dataclass
+class Target:
+    src: str
+    dir: str | None
+
+
+@dataclass
+class Fragment:
+    name: str
+    targets: list[Target]
+
+
+@dataclass
+class FragmentsConfig:
+    fragments: dict[str, Fragment]
+
+    def names(self) -> list[str]:
+        return sorted(self.fragments.keys())
+
+    def as_list(self) -> list[Fragment]:
+        return list(map(lambda name: self.fragments[name], self.names()))
+
+
 def main():
     args = parse_args()
 
     cwd = os.getcwd()
-    data = read_fragments_config(cwd)
-    if data is None:
+    all_fragments_config = read_fragments_config(cwd)
+    if all_fragments_config is None:
         return
 
-    config_fragments = set(data.keys())
-    selected_fragments = config_fragments
+    selected_fragment_names = set(all_fragments_config.names())
     if args.select is not None:
-        selected_fragments = config_fragments & args.select
+        selected_fragment_names = selected_fragment_names & args.select
 
-    if len(selected_fragments) == 0:
+    if len(selected_fragment_names) == 0:
         print("Cannot perform operations without selected fragments.")
         return
 
+    selected_fragments = {}
+    for fragment_name in selected_fragment_names:
+        selected_fragments[fragment_name] = all_fragments_config.fragments[
+            fragment_name
+        ]
+    selected_fragments_config = FragmentsConfig(selected_fragments)
+
     if args.fetch:
-        fetch_fragments(data, selected_fragments)
+        fetch_fragments(selected_fragments_config)
     elif args.apply:
-        apply_fragments(data, selected_fragments)
+        apply_fragments(selected_fragments_config)
     elif args.list:
-        list_fragments(data)
+        list_fragments(all_fragments_config)
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,20 +88,19 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def fetch_fragments(data: dict[str, Any], selected_fragments: set[str]) -> None:
-    sorted_fragments = sorted(selected_fragments)
-    print(f"Performing fetch for {', '.join(sorted_fragments)} fragments.")
+def fetch_fragments(fragments: FragmentsConfig) -> None:
+    print(f"Performing fetch for {', '.join(fragments.names())} fragments.")
 
     mkdir("./fragments")
 
-    for fragment in sorted_fragments:
-        for target in data[fragment]["targets"]:
-            src_path = os.path.expanduser(target["src"])
+    for fragment in fragments.as_list():
+        for target in fragment.targets:
+            src_path = os.path.expanduser(target.src)
             src_basename = os.path.basename(src_path)
-            fragment_path = os.path.join(".", "fragments", fragment)
+            fragment_path = os.path.join(".", "fragments", fragment.name)
 
-            if "dir" in target:
-                subdir = os.path.expanduser(target["dir"])
+            if target.dir is not None:
+                subdir = os.path.expanduser(target.dir)
                 fragment_path = os.path.join(fragment_path, subdir)
 
             if os.path.isdir(src_path):
@@ -81,18 +110,17 @@ def fetch_fragments(data: dict[str, Any], selected_fragments: set[str]) -> None:
             copy(src_path, fragment_path)
 
 
-def apply_fragments(data: dict[str, Any], selected_fragments: set[str]) -> None:
-    sorted_fragments = sorted(selected_fragments)
-    print(f"Performing apply for {', '.join(sorted_fragments)} fragments.")
+def apply_fragments(fragments: FragmentsConfig) -> None:
+    print(f"Performing apply for {', '.join(fragments.names())} fragments.")
 
-    for fragment in sorted_fragments:
-        for target in data[fragment]["targets"]:
-            src_path = os.path.expanduser(target["src"])
+    for fragment in fragments.as_list():
+        for target in fragment.targets:
+            src_path = os.path.expanduser(target.src)
             src_basename = os.path.basename(src_path)
-            fragment_path = os.path.join(".", "fragments", fragment)
+            fragment_path = os.path.join(".", "fragments", fragment.name)
 
-            if "dir" in target:
-                subdir = os.path.expanduser(target["dir"])
+            if target.dir is not None:
+                subdir = os.path.expanduser(target.dir)
                 fragment_path = os.path.join(fragment_path, subdir)
 
             target_path = os.path.join(fragment_path, src_basename)
@@ -104,13 +132,13 @@ def apply_fragments(data: dict[str, Any], selected_fragments: set[str]) -> None:
             copy(target_path, src_path)
 
 
-def list_fragments(data: dict[str, Any]) -> None:
-    fragments = ", ".join(data.keys())
+def list_fragments(fragments_config: FragmentsConfig) -> None:
+    fragments = ", ".join(sorted(fragments_config.names()))
     print("Fragments defined in configuration file:")
     print(fragments)
 
 
-def read_fragments_config(working_dir_path: str) -> dict[str, Any] | None:
+def read_fragments_config(working_dir_path: str) -> FragmentsConfig | None:
     fragments_path = os.path.join(working_dir_path, "fragments.toml")
 
     if not os.path.isfile(fragments_path):
@@ -120,8 +148,23 @@ def read_fragments_config(working_dir_path: str) -> dict[str, Any] | None:
     try:
         f = open(fragments_path, mode="rb")
         data = tomllib.load(f)
+
+        fragments = {}
+        fragment_names = set(data.keys())
+        for name in fragment_names:
+            targets = []
+            for target in data[name]["targets"]:
+                dir = None
+                if "dir" in target:
+                    dir = target["dir"]
+
+                targets.append(Target(src=target["src"], dir=dir))
+
+            fragment = Fragment(name=name, targets=targets)
+            fragments[name] = fragment
+
         f.close()
-        return data
+        return FragmentsConfig(fragments=fragments)
     except Exception:
         print("Could not read fragments config file.")
         return None
