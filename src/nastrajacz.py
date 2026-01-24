@@ -128,6 +128,7 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
     mkdir("./fragments")
 
     for fragment in fragments.as_list():
+        mkdir(fragment.path())
         if fragment.actions.before_fetch is not None:
             success = run_action(
                 fragment.name,
