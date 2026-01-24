@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 
+import sys
+
+if sys.version_info < (3, 11):
+    print("Python >=3.11 is required to run nastrajacz.")
+    sys.exit(1)
+
+
 import argparse
 import os
 import shutil
 import subprocess
-import sys
 import tomllib
 from dataclasses import dataclass
 
@@ -67,10 +73,6 @@ class FragmentsConfig:
 
 
 def main():
-    if sys.version_info < (3, 11):
-        print("Python >=3.11 is required to run nastrajacz.")
-        sys.exit(1)
-
     args = parse_args()
 
     cwd = os.getcwd()
