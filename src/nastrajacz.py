@@ -29,15 +29,15 @@ class Target:
 
 @dataclass
 class FragmentActions:
-    before_apply: str | None
-    after_apply: str | None
+    before_apply: str | None = None
+    after_apply: str | None = None
 
 
 @dataclass
 class Fragment:
     name: str
     targets: list[Target]
-    actions: FragmentActions | None
+    actions: FragmentActions
 
     def path(self) -> str:
         return os.path.join(".", "fragments", self.name)
@@ -128,7 +128,7 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
     print(f"Performing apply for {', '.join(fragments.names())} fragments.")
 
     for fragment in fragments.as_list():
-        if fragment.actions is not None and fragment.actions.before_apply is not None:
+        if fragment.actions.before_apply is not None:
             success = run_action(
                 fragment.name,
                 "before_apply",
@@ -156,7 +156,7 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
             copy(target_path, target.src_path())
 
-        if fragment.actions is not None and fragment.actions.after_apply is not None:
+        if fragment.actions.after_apply is not None:
             run_action(
                 fragment.name,
                 "after_apply",
@@ -193,20 +193,13 @@ def read_fragments_config(working_dir_path: str) -> FragmentsConfig | None:
 
                 targets.append(Target(src=target["src"], dir=dir))
 
-            actions = None
+            actions = FragmentActions()
             if "actions" in data[name]:
-                before_apply = None
-                after_apply = None
-
                 if "before_apply" in data[name]["actions"]:
-                    before_apply = data[name]["actions"]["before_apply"] or None
+                    actions.before_apply = data[name]["actions"]["before_apply"] or None
 
                 if "after_apply" in data[name]["actions"]:
-                    after_apply = data[name]["actions"]["after_apply"] or None
-
-                actions = FragmentActions(
-                    before_apply=before_apply, after_apply=after_apply
-                )
+                    actions.after_apply = data[name]["actions"]["after_apply"] or None
 
             fragment = Fragment(name=name, targets=targets, actions=actions)
             fragments[name] = fragment
