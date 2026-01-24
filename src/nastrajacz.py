@@ -128,6 +128,19 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
     print(f"Performing apply for {', '.join(fragments.names())} fragments.")
 
     for fragment in fragments.as_list():
+        if fragment.actions is not None and fragment.actions.before_apply is not None:
+            success = run_action(
+                fragment.name,
+                "before_apply",
+                fragment.actions.before_apply,
+                fragment.path(),
+            )
+
+            # If this fragment's before_apply script failed
+            # we must skip processing this fragment and move on to the next fragment.
+            if not success:
+                continue
+
         for target in fragment.targets:
             fragment_path = fragment.path()
 
