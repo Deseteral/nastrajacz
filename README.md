@@ -67,7 +67,7 @@ This stores files under `fragments/nvim/config/` and `fragments/nvim/local/` res
 
 ### Fragment actions
 
-You can define shell commands to run before and after applying a fragment using the `actions` section:
+You can define shell commands to run before and after applying or fetching a fragment using the `actions` section:
 
 ```toml
 [nvim]
@@ -78,20 +78,25 @@ targets = [
 [nvim.actions]
 before_apply = "echo 'Backing up existing config...'"
 after_apply = "nvim --headless +PlugInstall +qall"
+before_fetch = "docker compose stop"
+after_fetch = "docker compose start"
 ```
 
 #### Action options
 
-| Option         | Description                                                                       |
-| -------------- | --------------------------------------------------------------------------------- |
-| `before_apply` | Shell command to run before copying files. If it fails, the fragment is skipped.  |
-| `after_apply`  | Shell command to run after copying files. If it fails, only a warning is printed. |
+| Option         | Description                                                                  |
+| -------------- | ---------------------------------------------------------------------------- |
+| `before_apply` | Shell command to run before applying. If it fails, the fragment is skipped.  |
+| `after_apply`  | Shell command to run after applying. If it fails, only a warning is printed. |
+| `before_fetch` | Shell command to run before fetching. If it fails, the fragment is skipped.  |
+| `after_fetch`  | Shell command to run after fetching. If it fails, only a warning is printed. |
 
 **Behavior:**
 
 - Actions run in the fragment's directory (`./fragments/<fragment_name>/`).
-- If `before_apply` exits with a non-zero status, the fragment is skipped entirely (no files are copied, and `after_apply` does not run).
-- If `after_apply` exits with a non-zero status, a warning is printed but other fragments continue processing.
+- If `before_apply` or `before_fetch` exits with a non-zero status, the fragment is skipped entirely (no files are copied, and the corresponding `after_*` action does not run).
+- If `after_apply` or `after_fetch` exits with a non-zero status, a warning is printed but other fragments continue processing.
+- Empty strings are treated as undefined (no action runs).
 
 ## Usage
 
