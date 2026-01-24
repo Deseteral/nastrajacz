@@ -31,6 +31,8 @@ class Target:
 class FragmentActions:
     before_apply: str | None = None
     after_apply: str | None = None
+    before_fetch: str | None = None
+    after_fetch: str | None = None
 
 
 @dataclass
@@ -110,6 +112,19 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
     mkdir("./fragments")
 
     for fragment in fragments.as_list():
+        if fragment.actions.before_fetch is not None:
+            success = run_action(
+                fragment.name,
+                "before_fetch",
+                fragment.actions.before_fetch,
+                fragment.path(),
+            )
+
+            # If this fragment's before_fetch script failed
+            # we must skip processing this fragment and move on to the next fragment.
+            if not success:
+                continue
+
         for target in fragment.targets:
             target_path = fragment.path()
 
@@ -122,6 +137,14 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
 
             mkdir(target_path)
             copy(target.src_path(), target_path)
+
+        if fragment.actions.after_fetch is not None:
+            run_action(
+                fragment.name,
+                "after_fetch",
+                fragment.actions.after_fetch,
+                fragment.path(),
+            )
 
 
 def apply_fragments(fragments: FragmentsConfig) -> None:
@@ -200,6 +223,12 @@ def read_fragments_config(working_dir_path: str) -> FragmentsConfig | None:
 
                 if "after_apply" in data[name]["actions"]:
                     actions.after_apply = data[name]["actions"]["after_apply"] or None
+
+                if "before_fetch" in data[name]["actions"]:
+                    actions.before_fetch = data[name]["actions"]["before_fetch"] or None
+
+                if "after_fetch" in data[name]["actions"]:
+                    actions.after_fetch = data[name]["actions"]["after_fetch"] or None
 
             fragment = Fragment(name=name, targets=targets, actions=actions)
             fragments[name] = fragment
