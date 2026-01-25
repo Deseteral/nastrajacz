@@ -4,7 +4,7 @@ A simple configuration manager CLI tool for managing dotfiles and system configu
 
 nastrajacz helps you version control your configuration files by organizing them into **fragments** (logical groups like `nvim`, `git`, `zsh`) and syncing them between your system and a repository.
 
-## Key Concepts
+## Key concepts
 
 - **Fragment**: A configuration group (e.g., `nvim`, `git`, `zsh`). Each fragment contains one or more targets.
 - **Target**: A file or directory to manage within a fragment.
@@ -28,7 +28,7 @@ nastrajacz --help
 
 Create a `fragments.toml` file in the root of your configuration repository. This file defines which files and directories to manage.
 
-### Basic Example
+### Basic example
 
 ```toml
 [git]
@@ -44,7 +44,7 @@ targets = [
 ]
 ```
 
-### Using Subdirectories
+### Using subdirectories
 
 Use the `dir` option to organize files into subdirectories within a fragment:
 
@@ -58,7 +58,7 @@ targets = [
 
 This stores files under `fragments/nvim/config/` and `fragments/nvim/local/` respectively.
 
-### Target Options
+### Target options
 
 | Option | Required | Description                                                           |
 | ------ | -------- | --------------------------------------------------------------------- |
@@ -114,7 +114,7 @@ nastrajacz --fetch
 nastrajacz --fetch --select nvim,git
 ```
 
-### Apply Configuration
+### Apply configuration
 
 Copy files from the repository to your system:
 
@@ -126,7 +126,7 @@ nastrajacz --apply
 nastrajacz --apply --select nvim,git
 ```
 
-### List Fragments
+### List fragments
 
 Display all fragments defined in the configuration:
 
@@ -134,7 +134,7 @@ Display all fragments defined in the configuration:
 nastrajacz --list
 ```
 
-### Command Reference
+### Command reference
 
 | Command                | Description                                      |
 | ---------------------- | ------------------------------------------------ |
@@ -144,7 +144,7 @@ nastrajacz --list
 | `--select <fragments>` | Comma-separated list of fragments to operate on. |
 | `--help`               | Show help message.                               |
 
-## Directory Structure
+## Directory structure
 
 After fetching, your repository will have this structure:
 
@@ -164,7 +164,7 @@ your-config-repo/
         └── .zprofile
 ```
 
-## Example Workflow
+## Example workflow
 
 1. Create a new repository for your configurations.
 2. Create a `fragments.toml` file defining your fragments and targets.
