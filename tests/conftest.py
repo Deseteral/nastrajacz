@@ -6,7 +6,7 @@ import pytest
 def terminal(capsys):
     class VirtualTerminal:
         def __init__(self):
-            self.screen = pyte.Screen(8000, 240)
+            self.screen = pyte.Screen(800, 24)
             self.stream = pyte.Stream(self.screen)
 
         def render(self):

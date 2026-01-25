@@ -4,7 +4,7 @@ from src.nastrajacz import main
 
 
 def test_fetch_runs_after_fetch_script_in_fragment_directory(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, terminal
 ):
     """--fetch runs after_fetch script after copying files, in the fragment directory."""
 
@@ -31,7 +31,7 @@ after_fetch = "pwd > cwd.txt"
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (fragments_dir / ".testrc").read_text() == "fetched_content"
@@ -41,7 +41,16 @@ after_fetch = "pwd > cwd.txt"
 
     assert cwd_marker.read_text().strip() == str(fragments_dir)
 
-    assert "Running after_fetch for test_fragment_1" in output
+    terminal.assert_lines(
+        [
+            "Performing fetch for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "{home}/.testrc" to "./fragments/test_fragment_1" [ DONE].',
+            f"Running after_fetch for test_fragment_1 [ DONE] (exit code 0).",
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
+    )
 
 
 def test_fetch_does_not_run_after_fetch_when_not_defined_or_empty(
@@ -137,7 +146,7 @@ after_fetch = "touch success_marker.txt"
 
 
 def test_fetch_after_fetch_runs_for_each_selected_fragment(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, terminal
 ):
     """--fetch runs after_fetch for each selected fragment independently."""
 
@@ -169,7 +178,7 @@ after_fetch = "touch marker_b.txt"
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     frag1 = repo / "fragments" / "fragment_a"
@@ -181,12 +190,25 @@ after_fetch = "touch marker_b.txt"
     assert (frag1 / "marker_a.txt").exists(), "after_fetch for fragment_a did not run"
     assert (frag2 / "marker_b.txt").exists(), "after_fetch for fragment_b did not run"
 
-    assert "Running after_fetch for fragment_a" in output
-    assert "Running after_fetch for fragment_b" in output
+    terminal.assert_lines(
+        [
+            "Performing fetch for fragment_a, fragment_b fragments.",
+            "",
+            "Processing fragment fragment_a.",
+            f'Copying "{home}/.config_a" to "./fragments/fragment_a" [ DONE].',
+            f"Running after_fetch for fragment_a [ DONE] (exit code 0).",
+            "Finished processing fragment fragment_a [ DONE].",
+            "",
+            "Processing fragment fragment_b.",
+            f'Copying "{home}/.config_b" to "./fragments/fragment_b" [ DONE].',
+            f"Running after_fetch for fragment_b [ DONE] (exit code 0).",
+            "Finished processing fragment fragment_b [ DONE].",
+        ]
+    )
 
 
 def test_fetch_runs_before_fetch_script_in_fragment_directory(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, terminal
 ):
     """--fetch runs before_fetch script before copying files, in the fragment directory."""
 
@@ -214,7 +236,7 @@ after_fetch = "echo after >> order.txt"
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (fragments_dir / ".testrc").read_text() == "fetched_content"
@@ -227,8 +249,17 @@ after_fetch = "echo after >> order.txt"
     assert order_marker.exists()
     assert order_marker.read_text() == "before\nafter\n"
 
-    assert "Running before_fetch for test_fragment_1" in output
-    assert "Running after_fetch for test_fragment_1" in output
+    terminal.assert_lines(
+        [
+            "Performing fetch for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f"Running before_fetch for test_fragment_1 [ DONE] (exit code 0).",
+            f'Copying "{home}/.testrc" to "./fragments/test_fragment_1" [ DONE].',
+            f"Running after_fetch for test_fragment_1 [ DONE] (exit code 0).",
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
+    )
 
 
 def test_fetch_does_not_run_before_fetch_when_not_defined_or_empty(
@@ -333,7 +364,7 @@ after_fetch = "touch after_marker.txt"
 
 
 def test_fetch_before_fetch_runs_for_each_selected_fragment(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, terminal
 ):
     """--fetch runs before_fetch for each selected fragment independently."""
 
@@ -371,7 +402,7 @@ before_fetch = "touch marker_b.txt"
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (frag1 / ".config_a").read_text() == "content_a"
@@ -380,5 +411,18 @@ before_fetch = "touch marker_b.txt"
     assert (frag1 / "marker_a.txt").exists(), "before_fetch for fragment_a did not run"
     assert (frag2 / "marker_b.txt").exists(), "before_fetch for fragment_b did not run"
 
-    assert "Running before_fetch for fragment_a" in output
-    assert "Running before_fetch for fragment_b" in output
+    terminal.assert_lines(
+        [
+            "Performing fetch for fragment_a, fragment_b fragments.",
+            "",
+            "Processing fragment fragment_a.",
+            f"Running before_fetch for fragment_a [ DONE] (exit code 0).",
+            f'Copying "{home}/.config_a" to "./fragments/fragment_a" [ DONE].',
+            "Finished processing fragment fragment_a [ DONE].",
+            "",
+            "Processing fragment fragment_b.",
+            f"Running before_fetch for fragment_b [ DONE] (exit code 0).",
+            f'Copying "{home}/.config_b" to "./fragments/fragment_b" [ DONE].',
+            "Finished processing fragment fragment_b [ DONE].",
+        ]
+    )

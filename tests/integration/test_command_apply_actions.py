@@ -4,7 +4,7 @@ from src.nastrajacz import main
 
 
 def test_apply_runs_after_apply_script_in_fragment_directory(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, terminal
 ):
     """--apply runs after_apply script after copying files, in the fragment directory."""
 
@@ -31,7 +31,7 @@ after_apply = "pwd > cwd.txt"
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (home / ".testrc").read_text() == "applied_content"
@@ -41,7 +41,16 @@ after_apply = "pwd > cwd.txt"
 
     assert cwd_marker.read_text().strip() == str(fragments_dir)
 
-    assert "Running after_apply for test_fragment_1" in output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/.testrc" to "{home}/.testrc" [ DONE].',
+            f"Running after_apply for test_fragment_1 [ DONE] (exit code 0).",
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
+    )
 
 
 def test_apply_does_not_run_after_apply_when_not_defined_or_empty(
@@ -144,7 +153,7 @@ after_apply = "touch success_marker.txt"
 
 
 def test_apply_after_apply_runs_for_each_selected_fragment(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, terminal
 ):
     """--apply runs after_apply for each selected fragment independently."""
 
@@ -182,7 +191,7 @@ after_apply = "touch marker_b.txt"
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (home / ".config_a").read_text() == "content_a"
@@ -191,12 +200,25 @@ after_apply = "touch marker_b.txt"
     assert (frag1 / "marker_a.txt").exists(), "after_apply for fragment_a did not run"
     assert (frag2 / "marker_b.txt").exists(), "after_apply for fragment_b did not run"
 
-    assert "Running after_apply for fragment_a" in output
-    assert "Running after_apply for fragment_b" in output
+    terminal.assert_lines(
+        [
+            "Performing apply for fragment_a, fragment_b fragments.",
+            "",
+            "Processing fragment fragment_a.",
+            f'Copying "./fragments/fragment_a/.config_a" to "{home}/.config_a" [ DONE].',
+            f"Running after_apply for fragment_a [ DONE] (exit code 0).",
+            "Finished processing fragment fragment_a [ DONE].",
+            "",
+            "Processing fragment fragment_b.",
+            f'Copying "./fragments/fragment_b/.config_b" to "{home}/.config_b" [ DONE].',
+            f"Running after_apply for fragment_b [ DONE] (exit code 0).",
+            "Finished processing fragment fragment_b [ DONE].",
+        ]
+    )
 
 
 def test_apply_runs_before_apply_script_in_fragment_directory(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, terminal
 ):
     """--apply runs before_apply script before copying files, in the fragment directory."""
 
@@ -224,7 +246,7 @@ after_apply = "echo after >> order.txt"
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (home / ".testrc").read_text() == "applied_content"
@@ -237,8 +259,17 @@ after_apply = "echo after >> order.txt"
     assert order_marker.exists()
     assert order_marker.read_text() == "before\nafter\n"
 
-    assert "Running before_apply for test_fragment_1" in output
-    assert "Running after_apply for test_fragment_1" in output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f"Running before_apply for test_fragment_1 [ DONE] (exit code 0).",
+            f'Copying "./fragments/test_fragment_1/.testrc" to "{home}/.testrc" [ DONE].',
+            f"Running after_apply for test_fragment_1 [ DONE] (exit code 0).",
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
+    )
 
 
 def test_apply_does_not_run_before_apply_when_not_defined_or_empty(
@@ -346,7 +377,7 @@ after_apply = "touch after_marker.txt"
 
 
 def test_apply_before_apply_runs_for_each_selected_fragment(
-    tmp_path, monkeypatch, capsys
+    tmp_path, monkeypatch, terminal
 ):
     """--apply runs before_apply for each selected fragment independently."""
 
@@ -384,7 +415,7 @@ before_apply = "touch marker_b.txt"
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (home / ".config_a").read_text() == "content_a"
@@ -393,5 +424,18 @@ before_apply = "touch marker_b.txt"
     assert (frag1 / "marker_a.txt").exists(), "before_apply for fragment_a did not run"
     assert (frag2 / "marker_b.txt").exists(), "before_apply for fragment_b did not run"
 
-    assert "Running before_apply for fragment_a" in output
-    assert "Running before_apply for fragment_b" in output
+    terminal.assert_lines(
+        [
+            "Performing apply for fragment_a, fragment_b fragments.",
+            "",
+            "Processing fragment fragment_a.",
+            f"Running before_apply for fragment_a [ DONE] (exit code 0).",
+            f'Copying "./fragments/fragment_a/.config_a" to "{home}/.config_a" [ DONE].',
+            "Finished processing fragment fragment_a [ DONE].",
+            "",
+            "Processing fragment fragment_b.",
+            f"Running before_apply for fragment_b [ DONE] (exit code 0).",
+            f'Copying "./fragments/fragment_b/.config_b" to "{home}/.config_b" [ DONE].',
+            "Finished processing fragment fragment_b [ DONE].",
+        ]
+    )

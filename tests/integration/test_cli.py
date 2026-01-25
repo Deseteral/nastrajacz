@@ -3,7 +3,7 @@ import sys
 from src.nastrajacz import main
 
 
-def test_error_no_fragments_file(tmp_path, monkeypatch, capsys):
+def test_error_no_fragments_file(tmp_path, monkeypatch, terminal):
     """Shows error when fragments.toml does not exist."""
 
     # Given
@@ -12,13 +12,17 @@ def test_error_no_fragments_file(tmp_path, monkeypatch, capsys):
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
-    assert "There is no fragments file at this location." in output
+    terminal.assert_lines(
+        [
+            "There is no fragments file at this location.",
+        ]
+    )
 
 
-def test_error_invalid_toml(tmp_path, monkeypatch, capsys):
+def test_error_invalid_toml(tmp_path, monkeypatch, terminal):
     """Shows error when fragments.toml is invalid."""
 
     # Given
@@ -29,13 +33,17 @@ def test_error_invalid_toml(tmp_path, monkeypatch, capsys):
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
-    assert "Could not read fragments config file." in output
+    terminal.assert_lines(
+        [
+            "Could not read fragments config file.",
+        ]
+    )
 
 
-def test_error_nonexistent_fragment_selected(tmp_path, monkeypatch, capsys):
+def test_error_nonexistent_fragment_selected(tmp_path, monkeypatch, terminal):
     """Shows error when selected fragment does not exist in config."""
 
     # Given
@@ -51,7 +59,11 @@ targets = []
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
-    assert "Cannot perform operations without selected fragments." in output
+    terminal.assert_lines(
+        [
+            "Cannot perform operations without selected fragments.",
+        ]
+    )
