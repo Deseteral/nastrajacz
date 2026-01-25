@@ -3,7 +3,7 @@ import sys
 from src.nastrajacz import main
 
 
-def test_apply_copies_single_file_to_system(tmp_path, monkeypatch, capsys):
+def test_apply_copies_single_file_to_system(tmp_path, monkeypatch, terminal):
     """--apply copies a file from repo to source."""
 
     # Given
@@ -26,22 +26,26 @@ targets = [{{ src = "{home}/.testrc" }}]
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
+    terminal.debug_print_lines()
 
     # Then
     applied = home / ".testrc"
     assert applied.exists()
     assert applied.read_text() == "applied_content"
 
-    assert (
-        f'''Performing apply for test_fragment_1 fragments.
-Copying "./fragments/test_fragment_1/.testrc" to "{home}/.testrc"...  Done.
-'''
-        == output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/.testrc" to "{home}/.testrc" [ DONE].',
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
     )
 
 
-def test_apply_copies_directory_to_system(tmp_path, monkeypatch, capsys):
+def test_apply_copies_directory_to_system(tmp_path, monkeypatch, terminal):
     """--apply copies a directory from repo to source."""
 
     # Given
@@ -67,7 +71,7 @@ targets = [{{ src = "{home}/.config/testapp" }}]
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     applied_dir = home / ".config" / "testapp"
@@ -75,15 +79,18 @@ targets = [{{ src = "{home}/.config/testapp" }}]
     assert (applied_dir / "settings.json").read_text() == '{"applied": true}'
     assert (applied_dir / "subdir" / "nested.txt").read_text() == "nested_applied"
 
-    assert (
-        f'''Performing apply for test_fragment_1 fragments.
-Copying "./fragments/test_fragment_1/testapp" to "{home}/.config/testapp"...  Done.
-'''
-        == output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/testapp" to "{home}/.config/testapp" [ DONE].',
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
     )
 
 
-def test_apply_all_fragments(tmp_path, monkeypatch, capsys):
+def test_apply_all_fragments(tmp_path, monkeypatch, terminal):
     """--apply without --select applies all fragments."""
 
     # Given
@@ -114,22 +121,28 @@ targets = [{{ src = "{home}/.config2" }}]
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (home / ".config1").read_text() == "applied1"
     assert (home / ".config2").read_text() == "applied2"
 
-    assert (
-        f'''Performing apply for test_fragment_1, test_fragment_2 fragments.
-Copying "./fragments/test_fragment_1/.config1" to "{home}/.config1"...  Done.
-Copying "./fragments/test_fragment_2/.config2" to "{home}/.config2"...  Done.
-'''
-        == output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1, test_fragment_2 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/.config1" to "{home}/.config1" [ DONE].',
+            "Finished processing fragment test_fragment_1 [ DONE].",
+            "",
+            "Processing fragment test_fragment_2.",
+            f'Copying "./fragments/test_fragment_2/.config2" to "{home}/.config2" [ DONE].',
+            "Finished processing fragment test_fragment_2 [ DONE].",
+        ]
     )
 
 
-def test_apply_with_dir_option(tmp_path, monkeypatch, capsys):
+def test_apply_with_dir_option(tmp_path, monkeypatch, terminal):
     """--apply with dir option reads from subdirectory."""
 
     # Given
@@ -153,22 +166,25 @@ targets = [{{ src = "{home}/.config/testapp", dir = "dotconfig" }}]
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     applied = home / ".config" / "testapp" / "config.toml"
     assert applied.exists()
     assert applied.read_text() == "applied_setting = true"
 
-    assert (
-        f'''Performing apply for test_fragment_1 fragments.
-Copying "./fragments/test_fragment_1/dotconfig/testapp" to "{home}/.config/testapp"...  Done.
-'''
-        == output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/dotconfig/testapp" to "{home}/.config/testapp" [ DONE].',
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
     )
 
 
-def test_apply_skips_nonexistent_source(tmp_path, monkeypatch, capsys):
+def test_apply_skips_nonexistent_source(tmp_path, monkeypatch, terminal):
     """--apply skips files that don't exist in repo."""
 
     # Given
@@ -189,20 +205,23 @@ targets = [{{ src = "{home}/.testrc" }}]
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert not (home / ".testrc").exists()
 
-    assert (
-        f'''Performing apply for test_fragment_1 fragments.
-Copying "./fragments/test_fragment_1/.testrc" to "{home}/.testrc"...  Skipped...
-'''
-        == output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/.testrc" to "{home}/.testrc" [ SKIP].',
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
     )
 
 
-def test_apply_with_select_single_fragment(tmp_path, monkeypatch, capsys):
+def test_apply_with_select_single_fragment(tmp_path, monkeypatch, terminal):
     """--apply --select applies only specified fragment."""
 
     # Given
@@ -235,21 +254,24 @@ targets = [{{ src = "{home}/.config2" }}]
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (home / ".config1").read_text() == "applied1"
     assert not (home / ".config2").exists()
 
-    assert (
-        f'''Performing apply for test_fragment_1 fragments.
-Copying "./fragments/test_fragment_1/.config1" to "{home}/.config1"...  Done.
-'''
-        == output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/.config1" to "{home}/.config1" [ DONE].',
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
     )
 
 
-def test_apply_with_select_multiple_fragments(tmp_path, monkeypatch, capsys):
+def test_apply_with_select_multiple_fragments(tmp_path, monkeypatch, terminal):
     """--apply --select with comma-separated list applies only specified fragments."""
 
     # Given
@@ -291,23 +313,29 @@ targets = [{{ src = "{home}/.config3" }}]
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     assert (home / ".config1").read_text() == "applied1"
     assert not (home / ".config2").exists()
     assert (home / ".config3").read_text() == "applied3"
 
-    assert (
-        f'''Performing apply for test_fragment_1, test_fragment_3 fragments.
-Copying "./fragments/test_fragment_1/.config1" to "{home}/.config1"...  Done.
-Copying "./fragments/test_fragment_3/.config3" to "{home}/.config3"...  Done.
-'''
-        == output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1, test_fragment_3 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/.config1" to "{home}/.config1" [ DONE].',
+            "Finished processing fragment test_fragment_1 [ DONE].",
+            "",
+            "Processing fragment test_fragment_3.",
+            f'Copying "./fragments/test_fragment_3/.config3" to "{home}/.config3" [ DONE].',
+            "Finished processing fragment test_fragment_3 [ DONE].",
+        ]
     )
 
 
-def test_apply_creates_missing_parent_directories(tmp_path, monkeypatch, capsys):
+def test_apply_creates_missing_parent_directories(tmp_path, monkeypatch, terminal):
     """When copying single files --apply creates parent directories when they don't exist."""
 
     # Given
@@ -330,16 +358,19 @@ targets = [{{ src = "{home}/.config/testapp/user/settings.json" }}]
 
     # When
     main()
-    output = capsys.readouterr().out
+    terminal.render()
 
     # Then
     applied_dir = home / ".config" / "testapp" / "user"
     assert applied_dir.is_dir()
     assert (applied_dir / "settings.json").read_text() == '{"applied": true}'
 
-    assert (
-        f'''Performing apply for test_fragment_1 fragments.
-Copying "./fragments/test_fragment_1/settings.json" to "{home}/.config/testapp/user/settings.json"...  Done.
-'''
-        == output
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment_1 fragments.",
+            "",
+            "Processing fragment test_fragment_1.",
+            f'Copying "./fragments/test_fragment_1/settings.json" to "{home}/.config/testapp/user/settings.json" [ DONE].',
+            "Finished processing fragment test_fragment_1 [ DONE].",
+        ]
     )
