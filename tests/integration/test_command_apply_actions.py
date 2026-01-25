@@ -47,7 +47,7 @@ after_apply = "pwd > cwd.txt"
             "",
             "Processing fragment test_fragment_1.",
             f'Copying "./fragments/test_fragment_1/.testrc" to "{home}/.testrc" [ DONE].',
-            f"Running after_apply for test_fragment_1 [ DONE] (exit code 0).",
+            "Running after_apply for test_fragment_1 [ DONE] (exit code 0).",
             "Finished processing fragment test_fragment_1 [ DONE].",
         ]
     )
@@ -206,12 +206,12 @@ after_apply = "touch marker_b.txt"
             "",
             "Processing fragment fragment_a.",
             f'Copying "./fragments/fragment_a/.config_a" to "{home}/.config_a" [ DONE].',
-            f"Running after_apply for fragment_a [ DONE] (exit code 0).",
+            "Running after_apply for fragment_a [ DONE] (exit code 0).",
             "Finished processing fragment fragment_a [ DONE].",
             "",
             "Processing fragment fragment_b.",
             f'Copying "./fragments/fragment_b/.config_b" to "{home}/.config_b" [ DONE].',
-            f"Running after_apply for fragment_b [ DONE] (exit code 0).",
+            "Running after_apply for fragment_b [ DONE] (exit code 0).",
             "Finished processing fragment fragment_b [ DONE].",
         ]
     )
@@ -264,9 +264,9 @@ after_apply = "echo after >> order.txt"
             "Performing apply for test_fragment_1 fragments.",
             "",
             "Processing fragment test_fragment_1.",
-            f"Running before_apply for test_fragment_1 [ DONE] (exit code 0).",
+            "Running before_apply for test_fragment_1 [ DONE] (exit code 0).",
             f'Copying "./fragments/test_fragment_1/.testrc" to "{home}/.testrc" [ DONE].',
-            f"Running after_apply for test_fragment_1 [ DONE] (exit code 0).",
+            "Running after_apply for test_fragment_1 [ DONE] (exit code 0).",
             "Finished processing fragment test_fragment_1 [ DONE].",
         ]
     )
@@ -429,12 +429,12 @@ before_apply = "touch marker_b.txt"
             "Performing apply for fragment_a, fragment_b fragments.",
             "",
             "Processing fragment fragment_a.",
-            f"Running before_apply for fragment_a [ DONE] (exit code 0).",
+            "Running before_apply for fragment_a [ DONE] (exit code 0).",
             f'Copying "./fragments/fragment_a/.config_a" to "{home}/.config_a" [ DONE].',
             "Finished processing fragment fragment_a [ DONE].",
             "",
             "Processing fragment fragment_b.",
-            f"Running before_apply for fragment_b [ DONE] (exit code 0).",
+            "Running before_apply for fragment_b [ DONE] (exit code 0).",
             f'Copying "./fragments/fragment_b/.config_b" to "{home}/.config_b" [ DONE].',
             "Finished processing fragment fragment_b [ DONE].",
         ]

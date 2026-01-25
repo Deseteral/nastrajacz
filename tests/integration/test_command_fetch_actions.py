@@ -47,7 +47,7 @@ after_fetch = "pwd > cwd.txt"
             "",
             "Processing fragment test_fragment_1.",
             f'Copying "{home}/.testrc" to "./fragments/test_fragment_1" [ DONE].',
-            f"Running after_fetch for test_fragment_1 [ DONE] (exit code 0).",
+            "Running after_fetch for test_fragment_1 [ DONE] (exit code 0).",
             "Finished processing fragment test_fragment_1 [ DONE].",
         ]
     )
@@ -196,12 +196,12 @@ after_fetch = "touch marker_b.txt"
             "",
             "Processing fragment fragment_a.",
             f'Copying "{home}/.config_a" to "./fragments/fragment_a" [ DONE].',
-            f"Running after_fetch for fragment_a [ DONE] (exit code 0).",
+            "Running after_fetch for fragment_a [ DONE] (exit code 0).",
             "Finished processing fragment fragment_a [ DONE].",
             "",
             "Processing fragment fragment_b.",
             f'Copying "{home}/.config_b" to "./fragments/fragment_b" [ DONE].',
-            f"Running after_fetch for fragment_b [ DONE] (exit code 0).",
+            "Running after_fetch for fragment_b [ DONE] (exit code 0).",
             "Finished processing fragment fragment_b [ DONE].",
         ]
     )
@@ -254,9 +254,9 @@ after_fetch = "echo after >> order.txt"
             "Performing fetch for test_fragment_1 fragments.",
             "",
             "Processing fragment test_fragment_1.",
-            f"Running before_fetch for test_fragment_1 [ DONE] (exit code 0).",
+            "Running before_fetch for test_fragment_1 [ DONE] (exit code 0).",
             f'Copying "{home}/.testrc" to "./fragments/test_fragment_1" [ DONE].',
-            f"Running after_fetch for test_fragment_1 [ DONE] (exit code 0).",
+            "Running after_fetch for test_fragment_1 [ DONE] (exit code 0).",
             "Finished processing fragment test_fragment_1 [ DONE].",
         ]
     )
@@ -377,11 +377,8 @@ def test_fetch_before_fetch_runs_for_each_selected_fragment(
     repo = tmp_path / "repo"
     repo.mkdir()
 
-    # Pre-create fragment directories so before_fetch can run
     frag1 = repo / "fragments" / "fragment_a"
-    frag1.mkdir(parents=True)
     frag2 = repo / "fragments" / "fragment_b"
-    frag2.mkdir(parents=True)
 
     (repo / "fragments.toml").write_text(f'''
 [fragment_a]
@@ -416,12 +413,12 @@ before_fetch = "touch marker_b.txt"
             "Performing fetch for fragment_a, fragment_b fragments.",
             "",
             "Processing fragment fragment_a.",
-            f"Running before_fetch for fragment_a [ DONE] (exit code 0).",
+            "Running before_fetch for fragment_a [ DONE] (exit code 0).",
             f'Copying "{home}/.config_a" to "./fragments/fragment_a" [ DONE].',
             "Finished processing fragment fragment_a [ DONE].",
             "",
             "Processing fragment fragment_b.",
-            f"Running before_fetch for fragment_b [ DONE] (exit code 0).",
+            "Running before_fetch for fragment_b [ DONE] (exit code 0).",
             f'Copying "{home}/.config_b" to "./fragments/fragment_b" [ DONE].',
             "Finished processing fragment fragment_b [ DONE].",
         ]
