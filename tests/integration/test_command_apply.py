@@ -27,7 +27,6 @@ targets = [{{ src = "{home}/.testrc" }}]
     # When
     main()
     terminal.render()
-    terminal.debug_print_lines()
 
     # Then
     applied = home / ".testrc"
