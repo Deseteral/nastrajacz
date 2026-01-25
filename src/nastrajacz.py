@@ -22,6 +22,23 @@ HELP_SELECT = (
 HELP_LIST = "list fragments present in configuration file"
 
 
+class Term:
+    COLOR_DONE = "\033[92m"
+    COLOR_SKIP = "\033[93m"
+    COLOR_FAIL = "\033[91m"
+    COLOR_FRAGMENT = "\033[35m"
+    RESET = "\033[0m"
+
+    @staticmethod
+    def colored(s: str, color: str) -> str:
+        return f"{color}{s}{Term.RESET}"
+
+
+STATUS_DONE = Term.colored(" DONE", Term.COLOR_DONE)
+STATUS_SKIP = Term.colored(" SKIP", Term.COLOR_SKIP)
+STATUS_FAIL = Term.colored("󰚌 FAIL", Term.COLOR_FAIL)
+
+
 @dataclass
 class TargetActions:
     before_apply: str | None = None
@@ -128,7 +145,12 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
     mkdir("./fragments")
 
     for fragment in fragments.as_list():
+        print(
+            f"\nProcessing fragment {Term.colored(fragment.name, Term.COLOR_FRAGMENT)}."
+        )
+
         mkdir(fragment.path())
+
         if fragment.actions.before_fetch is not None:
             success = run_action(
                 fragment.name,
@@ -140,6 +162,9 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
             # If this fragment's before_fetch script failed
             # we must skip processing this fragment and move on to the next fragment.
             if not success:
+                print(
+                    f"  Skipping fragment {Term.colored(fragment.name, Term.COLOR_FRAGMENT)} because of failed before action [{STATUS_SKIP}]."
+                )
                 continue
 
         for target in fragment.targets:
@@ -163,11 +188,19 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
                 fragment.path(),
             )
 
+        print(
+            f"  Finished processing fragment {Term.colored(fragment.name, Term.COLOR_FRAGMENT)} [{STATUS_DONE}]."
+        )
+
 
 def apply_fragments(fragments: FragmentsConfig) -> None:
     print(f"Performing apply for {', '.join(fragments.names())} fragments.")
 
     for fragment in fragments.as_list():
+        print(
+            f"\nProcessing fragment {Term.colored(fragment.name, Term.COLOR_FRAGMENT)}."
+        )
+
         if fragment.actions.before_apply is not None:
             success = run_action(
                 fragment.name,
@@ -179,6 +212,9 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
             # If this fragment's before_apply script failed
             # we must skip processing this fragment and move on to the next fragment.
             if not success:
+                print(
+                    f"  Skipping fragment {Term.colored(fragment.name, Term.COLOR_FRAGMENT)} because of failed before action [{STATUS_SKIP}]."
+                )
                 continue
 
         for target in fragment.targets:
@@ -203,6 +239,10 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
                 fragment.actions.after_apply,
                 fragment.path(),
             )
+
+        print(
+            f"  Finished processing fragment {Term.colored(fragment.name, Term.COLOR_FRAGMENT)} [{STATUS_DONE}]."
+        )
 
 
 def list_fragments(fragments_config: FragmentsConfig) -> None:
@@ -280,25 +320,31 @@ def mkdir(dir_path: str) -> None:
 
 
 def copy(src: str, dst: str) -> None:
-    print(f'Copying "{src}" to "{dst}"...', end="")
+    print(f'  Copying "{src}" to "{dst}"', end="")
+
     if os.path.isdir(src):
         shutil.copytree(src, dst, dirs_exist_ok=True)
-        print("  Done.")
+        print(f" [{STATUS_DONE}].")
     elif os.path.isfile(src):
         shutil.copy2(src, dst)
-        print("  Done.")
+        print(f" [{STATUS_DONE}].")
     else:
-        print("  Skipped...")
+        print(f" [{STATUS_SKIP}].")
 
 
 def run_action(fragment_name: str, action_name: str, command: str, cwd: str) -> bool:
-    print(f"Running {action_name} for {fragment_name}...")
+    print(
+        f"  Running {action_name} for {Term.colored(fragment_name, Term.COLOR_FRAGMENT)}",
+        end="",
+    )
+
     result = subprocess.run(command, shell=True, cwd=cwd)
     success = result.returncode == 0
-    if not success:
-        print(
-            f"Warning: {action_name} for {fragment_name} failed with exit code {result.returncode}."
-        )
+
+    print(
+        f" [{STATUS_DONE if result.returncode == 0 else STATUS_FAIL}] (exit code {result.returncode})."
+    )
+
     return success
 
 
