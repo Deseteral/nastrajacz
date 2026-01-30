@@ -177,8 +177,34 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
             if os.path.isdir(target.src_path()):
                 target_path = os.path.join(target_path, target.src_basename())
 
+            # Run target's before_fetch action if defined
+            if target.actions.before_fetch is not None:
+                success = run_action(
+                    f"{fragment.name}/{target.src_basename()}",
+                    "before_fetch",
+                    target.actions.before_fetch,
+                    os.path.dirname(target_path),
+                )
+
+                # If this target's before_fetch script failed
+                # we must skip processing this target and move on to the next target.
+                if not success:
+                    print(
+                        f"    Skipping target {Term.colored(target.src_basename(), Term.COLOR_FRAGMENT)} because of failed before action [{STATUS_SKIP}]."
+                    )
+                    continue
+
             mkdir(target_path)
             copy(target.src_path(), target_path)
+
+            # Run target's after_fetch action if defined
+            if target.actions.after_fetch is not None:
+                run_action(
+                    f"{fragment.name}/{target.src_basename()}",
+                    "after_fetch",
+                    target.actions.after_fetch,
+                    os.path.dirname(target_path),
+                )
 
         if fragment.actions.after_fetch is not None:
             run_action(
@@ -226,11 +252,37 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
             target_path = os.path.join(fragment_path, target.src_basename())
 
+            # Run target's before_apply action if defined
+            if target.actions.before_apply is not None:
+                success = run_action(
+                    f"{fragment.name}/{target.src_basename()}",
+                    "before_apply",
+                    target.actions.before_apply,
+                    os.path.dirname(target_path),
+                )
+
+                # If this target's before_apply script failed
+                # we must skip processing this target and move on to the next target.
+                if not success:
+                    print(
+                        f"    Skipping target {Term.colored(target.src_basename(), Term.COLOR_FRAGMENT)} because of failed before action [{STATUS_SKIP}]."
+                    )
+                    continue
+
             src_parent_dir = os.path.dirname(target.src_path())
             if src_parent_dir:
                 mkdir(src_parent_dir)
 
             copy(target_path, target.src_path())
+
+            # Run target's after_apply action if defined
+            if target.actions.after_apply is not None:
+                run_action(
+                    f"{fragment.name}/{target.src_basename()}",
+                    "after_apply",
+                    target.actions.after_apply,
+                    os.path.dirname(target_path),
+                )
 
         if fragment.actions.after_apply is not None:
             run_action(
