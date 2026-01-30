@@ -60,10 +60,11 @@ This stores files under `fragments/nvim/config/` and `fragments/nvim/local/` res
 
 ### Target options
 
-| Option | Required | Description                                                           |
-| ------ | -------- | --------------------------------------------------------------------- |
-| `src`  | Yes      | Path to the file or directory on your system. Supports `~` expansion. |
-| `dir`  | No       | Subdirectory within the fragment to store the target.                 |
+| Option    | Required | Description                                                                                                 |
+| --------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `src`     | Yes      | Path to the file or directory on your system. Supports `~` expansion.                                       |
+| `dir`     | No       | Subdirectory within the fragment to store the target.                                                       |
+| `actions` | No       | Shell commands to run before/after fetching or applying this target. See [Target actions](#target-actions). |
 
 ### Fragment actions
 
@@ -97,6 +98,59 @@ after_apply = "some_service --install-updates"
 - If `before_apply` or `before_fetch` exits with a non-zero status, the fragment is skipped entirely (no files are copied, and the corresponding `after_*` action does not run).
 - If `after_apply` or `after_fetch` exits with a non-zero status, a warning is printed but other fragments continue processing.
 - Empty strings are treated as undefined (no action runs).
+
+### Target actions
+
+In addition to fragment-level actions, you can define actions for individual targets. Target actions run before or after each specific file/directory is copied:
+
+```toml
+[nvim]
+targets = [
+    { src = "~/.config/nvim", actions = { before_apply = "echo 'Updating nvim config'", after_apply = "nvim --headless +PlugInstall +qa" } },
+    { src = "~/.local/share/nvim/site" },
+]
+```
+
+#### Target action options
+
+| Option         | Description                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| `before_fetch` | Shell command to run before fetching this target. If it fails, the target is skipped.    |
+| `after_fetch`  | Shell command to run after fetching this target. If it fails, only a warning is printed. |
+| `before_apply` | Shell command to run before applying this target. If it fails, the target is skipped.    |
+| `after_apply`  | Shell command to run after applying this target. If it fails, only a warning is printed. |
+
+**Behavior:**
+
+- For `--apply`: target actions run in the fragment's directory (`./fragments/<fragment_name>/`).
+- For `--fetch`: target actions run in the fragments parent directory (`./fragments/`).
+- If `before_apply` or `before_fetch` fails, only that specific target is skipped; other targets in the same fragment continue processing.
+- If `after_apply` or `after_fetch` fails, a warning is printed but processing continues.
+
+#### Combining fragment and target actions
+
+When both fragment and target actions are defined, they execute in this order:
+
+1. Fragment's `before_*` action
+2. For each target:
+    - Target's `before_*` action
+    - File copy operation
+    - Target's `after_*` action
+3. Fragment's `after_*` action
+
+Example with both fragment and target actions:
+
+```toml
+[my_app]
+targets = [
+    { src = "~/.config/my_app", actions = { after_apply = "my_app --reload-config" } },
+    { src = "~/.local/share/my_app/data" },
+]
+
+[my_app.actions]
+before_apply = "my_app --stop"
+after_apply = "my_app --start"
+```
 
 ## Usage
 
