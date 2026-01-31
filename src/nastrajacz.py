@@ -153,10 +153,10 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
 
         if fragment.actions.before_fetch is not None:
             success = run_action(
-                fragment.name,
-                "before_fetch",
-                fragment.actions.before_fetch,
-                fragment.path(),
+                fragment_name=fragment.name,
+                action_name="before_fetch",
+                command=fragment.actions.before_fetch,
+                cwd=fragment.path(),
             )
 
             # If this fragment's before_fetch script failed
@@ -177,13 +177,12 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
             if os.path.isdir(target.src_path()):
                 target_path = os.path.join(target_path, target.src_basename())
 
-            # Run target's before_fetch action if defined
             if target.actions.before_fetch is not None:
                 success = run_action(
-                    f"{fragment.name}/{target.src_basename()}",
-                    "before_fetch",
-                    target.actions.before_fetch,
-                    os.path.dirname(target_path),
+                    fragment_name=f"{fragment.name}/{target.src_basename()}",
+                    action_name="before_fetch",
+                    command=target.actions.before_fetch,
+                    cwd=os.path.dirname(target_path),
                 )
 
                 # If this target's before_fetch script failed
@@ -197,21 +196,20 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
             mkdir(target_path)
             copy(target.src_path(), target_path)
 
-            # Run target's after_fetch action if defined
             if target.actions.after_fetch is not None:
                 run_action(
-                    f"{fragment.name}/{target.src_basename()}",
-                    "after_fetch",
-                    target.actions.after_fetch,
-                    os.path.dirname(target_path),
+                    fragment_name=f"{fragment.name}/{target.src_basename()}",
+                    action_name="after_fetch",
+                    command=target.actions.after_fetch,
+                    cwd=os.path.dirname(target_path),
                 )
 
         if fragment.actions.after_fetch is not None:
             run_action(
-                fragment.name,
-                "after_fetch",
-                fragment.actions.after_fetch,
-                fragment.path(),
+                fragment_name=fragment.name,
+                action_name="after_fetch",
+                command=fragment.actions.after_fetch,
+                cwd=fragment.path(),
             )
 
         print(
@@ -229,10 +227,10 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
         if fragment.actions.before_apply is not None:
             success = run_action(
-                fragment.name,
-                "before_apply",
-                fragment.actions.before_apply,
-                fragment.path(),
+                fragment_name=fragment.name,
+                action_name="before_apply",
+                command=fragment.actions.before_apply,
+                cwd=fragment.path(),
             )
 
             # If this fragment's before_apply script failed
@@ -252,13 +250,12 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
             target_path = os.path.join(fragment_path, target.src_basename())
 
-            # Run target's before_apply action if defined
             if target.actions.before_apply is not None:
                 success = run_action(
-                    f"{fragment.name}/{target.src_basename()}",
-                    "before_apply",
-                    target.actions.before_apply,
-                    os.path.dirname(target_path),
+                    fragment_name=f"{fragment.name}/{target.src_basename()}",
+                    action_name="before_apply",
+                    command=target.actions.before_apply,
+                    cwd=os.path.dirname(target_path),
                 )
 
                 # If this target's before_apply script failed
@@ -275,21 +272,20 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
             copy(target_path, target.src_path())
 
-            # Run target's after_apply action if defined
             if target.actions.after_apply is not None:
                 run_action(
-                    f"{fragment.name}/{target.src_basename()}",
-                    "after_apply",
-                    target.actions.after_apply,
-                    os.path.dirname(target_path),
+                    fragment_name=f"{fragment.name}/{target.src_basename()}",
+                    action_name="after_apply",
+                    command=target.actions.after_apply,
+                    cwd=os.path.dirname(target_path),
                 )
 
         if fragment.actions.after_apply is not None:
             run_action(
-                fragment.name,
-                "after_apply",
-                fragment.actions.after_apply,
-                fragment.path(),
+                fragment_name=fragment.name,
+                action_name="after_apply",
+                command=fragment.actions.after_apply,
+                cwd=fragment.path(),
             )
 
         print(
