@@ -2,6 +2,9 @@
 
 import sys
 
+__version_info__ = ("1", "3", "0")
+__version__ = ".".join(__version_info__)
+
 if sys.version_info < (3, 11):
     print("Python >=3.11 is required to run nastrajacz.")
     sys.exit(1)
@@ -121,7 +124,14 @@ def main():
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        prog="nastrajacz",
+        description="nastrajacz - a simple configuration manager.",
+    )
+
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--apply", help=HELP_APPLY, action="store_true")
