@@ -6,7 +6,7 @@ from src.nastrajacz import main
 def test_apply_runs_after_apply_target_action_in_fragment_directory(
     tmp_path, monkeypatch, terminal
 ):
-    """--apply runs target's after_apply action after copying the target file."""
+    """--apply runs target's after_apply action after copying the target file, with $TARGET_PATH env var."""
 
     # Given
     home = tmp_path / "home"
@@ -20,7 +20,7 @@ def test_apply_runs_after_apply_target_action_in_fragment_directory(
 
     (repo / "fragments.toml").write_text(f'''
 [test_fragment_1]
-targets = [{{ src = "{home}/.testrc", actions = {{ after_apply = "pwd > cwd.txt" }} }}]
+targets = [{{ src = "{home}/.testrc", actions = {{ after_apply = "pwd > cwd.txt && echo $TARGET_PATH > dest_path.txt" }} }}]
 ''')
 
     monkeypatch.chdir(repo)
@@ -36,6 +36,11 @@ targets = [{{ src = "{home}/.testrc", actions = {{ after_apply = "pwd > cwd.txt"
     cwd_marker = fragments_dir / "cwd.txt"
     assert cwd_marker.exists(), "target after_apply action did not run"
     assert cwd_marker.read_text().strip() == str(fragments_dir)
+
+    # Verify destination path is passed via $TARGET_PATH env var
+    dest_path_marker = fragments_dir / "dest_path.txt"
+    assert dest_path_marker.exists(), "destination path was not passed to action"
+    assert dest_path_marker.read_text().strip() == str(home / ".testrc")
 
     terminal.assert_lines(
         [
@@ -215,7 +220,7 @@ targets = [
 def test_apply_runs_before_apply_target_action_in_fragment_directory(
     tmp_path, monkeypatch, terminal
 ):
-    """--apply runs target's before_apply action before copying the target file."""
+    """--apply runs target's before_apply action before copying the target file, with $TARGET_PATH env var."""
 
     # Given
     home = tmp_path / "home"
@@ -229,7 +234,7 @@ def test_apply_runs_before_apply_target_action_in_fragment_directory(
 
     (repo / "fragments.toml").write_text(f'''
 [test_fragment_1]
-targets = [{{ src = "{home}/.testrc", actions = {{ before_apply = "pwd > cwd.txt && echo before > order.txt", after_apply = "echo after >> order.txt" }} }}]
+targets = [{{ src = "{home}/.testrc", actions = {{ before_apply = "pwd > cwd.txt && echo $TARGET_PATH > dest_path.txt && echo before > order.txt", after_apply = "echo after >> order.txt" }} }}]
 ''')
 
     monkeypatch.chdir(repo)
@@ -245,6 +250,11 @@ targets = [{{ src = "{home}/.testrc", actions = {{ before_apply = "pwd > cwd.txt
     cwd_marker = fragments_dir / "cwd.txt"
     assert cwd_marker.exists(), "target before_apply action did not run"
     assert cwd_marker.read_text().strip() == str(fragments_dir)
+
+    # Verify destination path is passed via $TARGET_PATH env var
+    dest_path_marker = fragments_dir / "dest_path.txt"
+    assert dest_path_marker.exists(), "destination path was not passed to action"
+    assert dest_path_marker.read_text().strip() == str(home / ".testrc")
 
     order_marker = fragments_dir / "order.txt"
     assert order_marker.exists()
@@ -449,6 +459,7 @@ def test_apply_target_actions_combined_with_fragment_actions(
     fragments_dir.mkdir(parents=True)
     (fragments_dir / ".testrc").write_text("applied_content")
 
+    # Note: Target actions have $TARGET_PATH env var set
     (repo / "fragments.toml").write_text(f'''
 [test_fragment]
 targets = [{{ src = "{home}/.testrc", actions = {{ before_apply = "echo target_before >> order.txt", after_apply = "echo target_after >> order.txt" }} }}]
@@ -473,6 +484,20 @@ after_apply = "echo fragment_after >> order.txt"
     assert (
         order_marker.read_text()
         == "fragment_before\ntarget_before\ntarget_after\nfragment_after\n"
+    )
+
+    terminal.assert_lines(
+        [
+            "Performing apply for test_fragment fragments.",
+            "",
+            "Processing fragment test_fragment.",
+            "Running before_apply for test_fragment [\uf42e DONE] (exit code 0).",
+            "Running before_apply for test_fragment/.testrc [\uf42e DONE] (exit code 0).",
+            f'Copying "./fragments/test_fragment/.testrc" to "{home}/.testrc" [\uf42e DONE].',
+            "Running after_apply for test_fragment/.testrc [\uf42e DONE] (exit code 0).",
+            "Running after_apply for test_fragment [\uf42e DONE] (exit code 0).",
+            "Finished processing fragment test_fragment [\uf42e DONE].",
+        ]
     )
 
     terminal.assert_lines(

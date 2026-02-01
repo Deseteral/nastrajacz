@@ -94,19 +94,23 @@ after_apply = "some_service --install-updates"
 
 **Behavior:**
 
-- Actions run in the fragment's directory (`./fragments/<fragment_name>/`).
-- If `before_apply` or `before_fetch` exits with a non-zero status, the fragment is skipped entirely (no files are copied, and the corresponding `after_*` action does not run).
-- If `after_apply` or `after_fetch` exits with a non-zero status, a warning is printed but other fragments continue processing.
+- **`$TARGET_PATH` environment variable**: Target actions have access to the destination path via the `$TARGET_PATH` environment variable.
+  - For `--apply`: `$TARGET_PATH` is the system path (e.g., `~/.config/nvim` expanded to `/home/user/.config/nvim`).
+  - For `--fetch`: `$TARGET_PATH` is the fragment path (e.g., `./fragments/nvim/.config/nvim`).
+- For `--apply`: target actions run in the fragment's directory (`./fragments/<fragment_name>/`).
+- For `--fetch`: target actions run in the fragments parent directory (`./fragments/`).
+- If `before_apply` or `before_fetch` fails, only that specific target is skipped; other targets in the same fragment continue processing.
+- If `after_apply` or `after_fetch` fails, a warning is printed but processing continues.
 - Empty strings are treated as undefined (no action runs).
 
 ### Target actions
 
-In addition to fragment-level actions, you can define actions for individual targets. Target actions run before or after each specific file/directory is copied:
+In addition to fragment-level actions, you can define actions for individual targets. Target actions run before or after each specific file/directory is copied, and have access to the destination path via `$TARGET_PATH`:
 
 ```toml
 [nvim]
 targets = [
-    { src = "~/.config/nvim", actions = { before_apply = "echo 'Updating nvim config'", after_apply = "nvim --headless +PlugInstall +qa" } },
+    { src = "~/.config/nvim", actions = { before_apply = "echo \"Updating: $TARGET_PATH\"", after_apply = "nvim --headless +PlugInstall +qa" } },
     { src = "~/.local/share/nvim/site" },
 ]
 ```
@@ -143,7 +147,7 @@ Example with both fragment and target actions:
 ```toml
 [my_app]
 targets = [
-    { src = "~/.config/my_app", actions = { after_apply = "my_app --reload-config" } },
+    { src = "~/.config/my_app", actions = { after_apply = "my_app --reload-config $TARGET_PATH" } },
     { src = "~/.local/share/my_app/data" },
 ]
 
@@ -151,6 +155,12 @@ targets = [
 before_apply = "my_app --stop"
 after_apply = "my_app --start"
 ```
+
+In this example, when running `--apply`:
+1. `my_app --stop` runs (fragment before_apply)
+2. `~/.config/my_app` is copied, then `my_app --reload-config /home/user/.config/my_app` runs (target after_apply with `$TARGET_PATH` = destination path)
+3. `~/.local/share/my_app/data` is copied (no target actions)
+4. `my_app --start` runs (fragment after_apply)
 
 ## Usage
 

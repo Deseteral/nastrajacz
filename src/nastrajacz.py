@@ -178,11 +178,20 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
                 target_path = os.path.join(target_path, target.src_basename())
 
             if target.actions.before_fetch is not None:
+                # For fetch, destination is the target_path in fragments directory.
+                #   files: target_path is the directory, actual file will be target_path/basename.
+                #   directories: target_path already includes the basename.
+                if os.path.isdir(target.src_path()):
+                    dest_path = target_path
+                else:
+                    dest_path = os.path.join(target_path, target.src_basename())
+
                 success = run_action(
-                    fragment_name=f"{fragment.name}/{target.src_basename()}",
+                    fragment_name=os.path.join(fragment.name, target.src_basename()),
                     action_name="before_fetch",
                     command=target.actions.before_fetch,
                     cwd=os.path.dirname(target_path),
+                    target_path=dest_path,
                 )
 
                 # If this target's before_fetch script failed
@@ -197,11 +206,20 @@ def fetch_fragments(fragments: FragmentsConfig) -> None:
             copy(target.src_path(), target_path)
 
             if target.actions.after_fetch is not None:
+                # For fetch, destination is the target_path in fragments directory.
+                #   files: target_path is the directory, actual file will be target_path/basename.
+                #   directories: target_path already includes the basename.
+                if os.path.isdir(target.src_path()):
+                    dest_path = target_path
+                else:
+                    dest_path = os.path.join(target_path, target.src_basename())
+
                 run_action(
-                    fragment_name=f"{fragment.name}/{target.src_basename()}",
+                    fragment_name=os.path.join(fragment.name, target.src_basename()),
                     action_name="after_fetch",
                     command=target.actions.after_fetch,
                     cwd=os.path.dirname(target_path),
+                    target_path=dest_path,
                 )
 
         if fragment.actions.after_fetch is not None:
@@ -252,10 +270,11 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
             if target.actions.before_apply is not None:
                 success = run_action(
-                    fragment_name=f"{fragment.name}/{target.src_basename()}",
+                    fragment_name=os.path.join(fragment.name, target.src_basename()),
                     action_name="before_apply",
                     command=target.actions.before_apply,
                     cwd=os.path.dirname(target_path),
+                    target_path=target.src_path(),
                 )
 
                 # If this target's before_apply script failed
@@ -274,10 +293,11 @@ def apply_fragments(fragments: FragmentsConfig) -> None:
 
             if target.actions.after_apply is not None:
                 run_action(
-                    fragment_name=f"{fragment.name}/{target.src_basename()}",
+                    fragment_name=os.path.join(fragment.name, target.src_basename()),
                     action_name="after_apply",
                     command=target.actions.after_apply,
                     cwd=os.path.dirname(target_path),
+                    target_path=target.src_path(),
                 )
 
         if fragment.actions.after_apply is not None:
@@ -380,13 +400,23 @@ def copy(src: str, dst: str) -> None:
         print(f" [{STATUS_SKIP}].")
 
 
-def run_action(fragment_name: str, action_name: str, command: str, cwd: str) -> bool:
+def run_action(
+    fragment_name: str,
+    action_name: str,
+    command: str,
+    cwd: str,
+    target_path: str | None = None,
+) -> bool:
     print(
         f"  Running {action_name} for {Term.colored(fragment_name, Term.COLOR_FRAGMENT)}",
         end="",
     )
 
-    result = subprocess.run(command, shell=True, cwd=cwd)
+    env = os.environ.copy()
+    if target_path is not None:
+        env["TARGET_PATH"] = target_path
+
+    result = subprocess.run(command, shell=True, cwd=cwd, env=env)
     success = result.returncode == 0
 
     print(

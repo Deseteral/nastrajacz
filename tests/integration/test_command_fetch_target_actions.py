@@ -6,7 +6,7 @@ from src.nastrajacz import main
 def test_fetch_runs_after_fetch_target_action_in_fragments_parent_directory(
     tmp_path, monkeypatch, terminal
 ):
-    """--fetch runs target's after_fetch action after copying the target file, in the fragments parent directory."""
+    """--fetch runs target's after_fetch action after copying the target file, with $TARGET_PATH env var."""
 
     # Given
     home = tmp_path / "home"
@@ -20,7 +20,7 @@ def test_fetch_runs_after_fetch_target_action_in_fragments_parent_directory(
 
     (repo / "fragments.toml").write_text(f'''
 [test_fragment_1]
-targets = [{{ src = "{home}/.testrc", actions = {{ after_fetch = "pwd > cwd.txt" }} }}]
+targets = [{{ src = "{home}/.testrc", actions = {{ after_fetch = "pwd > cwd.txt && echo $TARGET_PATH > dest_path.txt" }} }}]
 ''')
 
     monkeypatch.chdir(repo)
@@ -38,6 +38,11 @@ targets = [{{ src = "{home}/.testrc", actions = {{ after_fetch = "pwd > cwd.txt"
     cwd_marker = fragments_parent / "cwd.txt"
     assert cwd_marker.exists(), "target after_fetch action did not run"
     assert cwd_marker.read_text().strip() == str(fragments_parent)
+
+    # Verify destination path is passed via $TARGET_PATH env var
+    dest_path_marker = fragments_parent / "dest_path.txt"
+    assert dest_path_marker.exists(), "destination path was not passed to action"
+    assert dest_path_marker.read_text().strip() == "./fragments/test_fragment_1/.testrc"
 
     terminal.assert_lines(
         [
@@ -217,7 +222,7 @@ targets = [
 def test_fetch_runs_before_fetch_target_action_in_fragments_parent_directory(
     tmp_path, monkeypatch, terminal
 ):
-    """--fetch runs target's before_fetch action before copying the target file, in the fragments parent directory."""
+    """--fetch runs target's before_fetch action before copying the target file, with $TARGET_PATH env var."""
 
     # Given
     home = tmp_path / "home"
@@ -231,7 +236,7 @@ def test_fetch_runs_before_fetch_target_action_in_fragments_parent_directory(
 
     (repo / "fragments.toml").write_text(f'''
 [test_fragment_1]
-targets = [{{ src = "{home}/.testrc", actions = {{ before_fetch = "pwd > cwd.txt && echo before > order.txt", after_fetch = "echo after >> order.txt" }} }}]
+targets = [{{ src = "{home}/.testrc", actions = {{ before_fetch = "pwd > cwd.txt && echo $TARGET_PATH > dest_path.txt && echo before > order.txt", after_fetch = "echo after >> order.txt" }} }}]
 ''')
 
     monkeypatch.chdir(repo)
@@ -249,6 +254,11 @@ targets = [{{ src = "{home}/.testrc", actions = {{ before_fetch = "pwd > cwd.txt
     cwd_marker = fragments_parent / "cwd.txt"
     assert cwd_marker.exists(), "target before_fetch action did not run"
     assert cwd_marker.read_text().strip() == str(fragments_parent)
+
+    # Verify destination path is passed via $TARGET_PATH env var
+    dest_path_marker = fragments_parent / "dest_path.txt"
+    assert dest_path_marker.exists(), "destination path was not passed to action"
+    assert dest_path_marker.read_text().strip() == "./fragments/test_fragment_1/.testrc"
 
     order_marker = fragments_parent / "order.txt"
     assert order_marker.exists()
@@ -459,6 +469,7 @@ def test_fetch_target_actions_combined_with_fragment_actions(
 
     # Note: Fragment actions run in fragment directory, target actions run in fragments parent
     # To test order properly, we use the fragment directory for all actions
+    # Target actions have $TARGET_PATH env var set
     (repo / "fragments.toml").write_text(f'''
 [test_fragment]
 targets = [{{ src = "{home}/.testrc", actions = {{ before_fetch = "echo target_before >> order.txt", after_fetch = "echo target_after >> order.txt" }} }}]
